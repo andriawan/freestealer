@@ -23,10 +23,13 @@ func SetupRoutes(port string) {
 	})
 
 	// Authentication endpoints
+	http.HandleFunc("/auth/register", auth.RegisterHandler)
+	http.HandleFunc("/auth/login", auth.LoginHandler)
 	http.HandleFunc("/auth/github", auth.BeginAuthHandler)
 	http.HandleFunc("/auth/github/callback", auth.CallbackHandler)
 	http.HandleFunc("/auth/logout", auth.LogoutHandler)
 	http.HandleFunc("/auth/me", auth.GetCurrentUser)
+	http.HandleFunc("/auth/refresh", auth.RefreshTokenHandler)
 
 	// User endpoints
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
