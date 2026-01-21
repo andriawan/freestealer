@@ -1,19 +1,53 @@
 package models
 
 import (
+	"os"
 	"testing"
 	"time"
 
-	"github.com/glebarez/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-// setupTestDB creates an in-memory SQLite database for testing
+// setupTestDB creates a PostgreSQL test database
 func setupTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to connect to test database: %v", err)
+	// Use PostgreSQL for testing
+	host := os.Getenv("TEST_DB_HOST")
+	if host == "" {
+		host = "localhost"
 	}
+
+	port := os.Getenv("TEST_DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	user := os.Getenv("TEST_DB_USER")
+	if user == "" {
+		user = "postgres"
+	}
+
+	password := os.Getenv("TEST_DB_PASSWORD")
+	if password == "" {
+		password = "postgres"
+	}
+
+	dbname := os.Getenv("TEST_DB_NAME")
+	if dbname == "" {
+		dbname = "freestealer_test"
+	}
+
+	dsn := "host=" + host + " port=" + port + " user=" + user + " password=" + password + " dbname=" + dbname + " sslmode=disable"
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping test - PostgreSQL not available: %v", err)
+		return nil
+	}
+
+	// Clean and migrate
+	db.Exec("DROP SCHEMA IF EXISTS public CASCADE")
+	db.Exec("CREATE SCHEMA public")
 
 	// Run migrations
 	err = db.AutoMigrate(&User{}, &Tier{}, &Vote{}, &Comment{})

@@ -43,13 +43,8 @@ func main() {
 		log.Warn("No .env file found")
 	}
 
-	// Initialize database
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "./freetier.db"
-	}
-
-	if err := database.InitDatabase(dbPath); err != nil {
+	// Initialize database (PostgreSQL)
+	if err := database.InitDatabase(); err != nil {
 		log.WithError(err).Fatal("Failed to initialize database")
 	}
 

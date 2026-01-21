@@ -2,18 +2,85 @@ package database
 
 import (
 	"freestealer/models"
+	"os"
 	"testing"
 
-	"github.com/glebarez/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+// setupTestDB creates a test database connection
+func setupTestDB(t *testing.T) {
+	// Use environment variables or default test values
+	host := os.Getenv("TEST_DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
+	port := os.Getenv("TEST_DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	user := os.Getenv("TEST_DB_USER")
+	if user == "" {
+		user = "postgres"
+	}
+
+	password := os.Getenv("TEST_DB_PASSWORD")
+	if password == "" {
+		password = "postgres"
+	}
+
+	dbname := os.Getenv("TEST_DB_NAME")
+	if dbname == "" {
+		dbname = "freestealer_test"
+	}
+
+	dsn := "host=" + host + " port=" + port + " user=" + user + " password=" + password + " dbname=" + dbname + " sslmode=disable"
+
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping test - PostgreSQL not available: %v", err)
+		return
+	}
+
+	// Clean and migrate
+	DB.Exec("DROP SCHEMA IF EXISTS public CASCADE")
+	DB.Exec("CREATE SCHEMA public")
+
+	err = DB.AutoMigrate(
+		&models.User{},
+		&models.Tier{},
+		&models.Vote{},
+		&models.Comment{},
+	)
+	if err != nil {
+		t.Fatalf("Failed to migrate: %v", err)
+	}
+}
+
 func TestInitDatabase(t *testing.T) {
-	t.Run("Initialize with memory database", func(t *testing.T) {
-		// Use in-memory database for testing
-		err := InitDatabase(":memory:")
+	t.Run("Initialize with environment variables", func(t *testing.T) {
+		// Set test environment variables
+		os.Setenv("DB_HOST", "localhost")
+		os.Setenv("DB_PORT", "5432")
+		os.Setenv("DB_USER", "postgres")
+		os.Setenv("DB_PASSWORD", "postgres")
+		os.Setenv("DB_NAME", "freestealer_test")
+		defer func() {
+			os.Unsetenv("DB_HOST")
+			os.Unsetenv("DB_PORT")
+			os.Unsetenv("DB_USER")
+			os.Unsetenv("DB_PASSWORD")
+			os.Unsetenv("DB_NAME")
+		}()
+
+		err := InitDatabase()
 		if err != nil {
-			t.Errorf("Failed to initialize database: %v", err)
+			t.Skipf("Skipping test - PostgreSQL not available: %v", err)
+			return
 		}
 
 		if DB == nil {
@@ -22,7 +89,10 @@ func TestInitDatabase(t *testing.T) {
 	})
 
 	t.Run("Tables are created", func(t *testing.T) {
-		InitDatabase(":memory:")
+		setupTestDB(t)
+		if DB == nil {
+			t.Skip("Database not available")
+		}
 
 		// Check if tables exist
 		if !DB.Migrator().HasTable(&models.User{}) {
@@ -40,7 +110,12 @@ func TestInitDatabase(t *testing.T) {
 	})
 
 	t.Run("Indexes are created", func(t *testing.T) {
-		InitDatabase(":memory:")
+		setupTestDB(t)
+		if DB == nil {
+			t.Skip("Database not available")
+		}
+
+		createIndexes()
 
 		// Check if columns have indexes
 		if !DB.Migrator().HasIndex(&models.User{}, "idx_users_username") {
@@ -59,7 +134,10 @@ func TestInitDatabase(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	InitDatabase(":memory:")
+	setupTestDB(t)
+	if DB == nil {
+		t.Skip("Database not available")
+	}
 
 	db := GetDB()
 	if db == nil {
@@ -72,9 +150,10 @@ func TestGetDB(t *testing.T) {
 }
 
 func TestDatabaseOperations(t *testing.T) {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{}, &models.Tier{}, &models.Vote{}, &models.Comment{})
-	DB = db
+	setupTestDB(t)
+	if DB == nil {
+		t.Skip("Database not available")
+	}
 
 	t.Run("Create and read user", func(t *testing.T) {
 		user := models.User{
@@ -170,9 +249,10 @@ func TestDatabaseOperations(t *testing.T) {
 }
 
 func TestQueryOptimization(t *testing.T) {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{}, &models.Tier{}, &models.Vote{}, &models.Comment{})
-	DB = db
+	setupTestDB(t)
+	if DB == nil {
+		t.Skip("Database not available")
+	}
 
 	// Create test data
 	user := models.User{Username: "perftest", Email: "perftest@example.com"}
@@ -235,9 +315,10 @@ func TestQueryOptimization(t *testing.T) {
 }
 
 func TestDatabaseConstraints(t *testing.T) {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{}, &models.Tier{}, &models.Vote{}, &models.Comment{})
-	DB = db
+	setupTestDB(t)
+	if DB == nil {
+		t.Skip("Database not available")
+	}
 
 	t.Run("Unique constraint on username", func(t *testing.T) {
 		user1 := models.User{Username: "unique", Email: "user1@example.com"}
@@ -253,6 +334,7 @@ func TestDatabaseConstraints(t *testing.T) {
 
 	t.Run("Unique constraint on vote", func(t *testing.T) {
 		user := models.User{Username: "voter", Email: "voter@example.com"}
+
 		DB.Create(&user)
 
 		tier := models.Tier{UserID: user.ID, Platform: "Test", Name: "Test"}

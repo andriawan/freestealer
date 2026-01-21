@@ -12,20 +12,53 @@ import (
 	"freestealer/database"
 	"freestealer/models"
 
-	"github.com/glebarez/sqlite"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-// setupTestDB creates an in-memory database for testing
+// setupTestDB creates a PostgreSQL test database
 func setupTestDB(t *testing.T) {
-	var err error
-	database.DB, err = gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to connect to test database: %v", err)
+	// Use PostgreSQL for testing
+	host := os.Getenv("TEST_DB_HOST")
+	if host == "" {
+		host = "localhost"
 	}
+
+	port := os.Getenv("TEST_DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	user := os.Getenv("TEST_DB_USER")
+	if user == "" {
+		user = "postgres"
+	}
+
+	password := os.Getenv("TEST_DB_PASSWORD")
+	if password == "" {
+		password = "postgres"
+	}
+
+	dbname := os.Getenv("TEST_DB_NAME")
+	if dbname == "" {
+		dbname = "freestealer_test"
+	}
+
+	dsn := "host=" + host + " port=" + port + " user=" + user + " password=" + password + " dbname=" + dbname + " sslmode=disable"
+
+	var err error
+	database.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping test - PostgreSQL not available: %v", err)
+		return
+	}
+
+	// Clean and migrate
+	database.DB.Exec("DROP SCHEMA IF EXISTS public CASCADE")
+	database.DB.Exec("CREATE SCHEMA public")
 
 	// Auto-migrate the schema
 	err = database.DB.AutoMigrate(&models.User{}, &models.Tier{}, &models.Vote{}, &models.Comment{})
