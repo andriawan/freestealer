@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+!README.md
+!LICENSE
+docs/swagger.yaml
+
+# Development files
+.air.toml
+tmp
+.vscode
+.idea
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+
+# Build artifacts
+freestealer
+freestealer.exe
+freestealer-*
+*.exe
+*.so
+*.dylib
+
+# Database
+*.db
+*.sqlite
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scripts
+scripts/
