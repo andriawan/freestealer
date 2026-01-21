@@ -25,7 +25,11 @@ import (
 // @license.url https://opensource.org/licenses/MIT
 
 // @BasePath /
-// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// Configure logrus

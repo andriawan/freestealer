@@ -20,6 +20,7 @@ import (
 // @Success 201 {object} models.User
 // @Failure 400 {object} map[string]string
 // @Failure 409 {object} map[string]string
+// @Security BearerAuth
 // @Router /users [post]
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -66,6 +67,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {array} models.User
 // @Failure 500 {object} map[string]string
+// @Security BearerAuth
 // @Router /users [get]
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

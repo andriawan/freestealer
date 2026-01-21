@@ -22,6 +22,7 @@ import (
 // @Success 201 {object} models.Tier
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
+// @Security BearerAuth
 // @Router /tiers [post]
 func CreateTier(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -190,8 +191,7 @@ func GetTier(w http.ResponseWriter, r *http.Request) {
 // @Param tier body models.Tier true "Tier update data"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /tiers/{id} [put]
+// @Failure 500 {object} map[string]string// @Security BearerAuth// @Router /tiers/{id} [put]
 func UpdateTier(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -238,8 +238,7 @@ func UpdateTier(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Tier ID"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /tiers/{id} [delete]
+// @Failure 500 {object} map[string]string// @Security BearerAuth// @Router /tiers/{id} [delete]
 func DeleteTier(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

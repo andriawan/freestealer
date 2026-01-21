@@ -455,48 +455,9 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a comment
-      tags:
-      - comments
-  /comments/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a comment from a tier
-      parameters:
-      - description: Comment ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Delete a comment
       tags:
       - comments
   /tiers:
@@ -568,44 +529,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new tier
       tags:
       - tiers
   /tiers/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a tier from the database
-      parameters:
-      - description: Tier ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Delete a tier
-      tags:
-      - tiers
     get:
       consumes:
       - application/json
@@ -638,46 +567,6 @@ paths:
       summary: Get a tier by ID
       tags:
       - tiers
-    put:
-      consumes:
-      - application/json
-      description: Update an existing tier information
-      parameters:
-      - description: Tier ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Tier update data
-        in: body
-        name: tier
-        required: true
-        schema:
-          $ref: '#/definitions/models.Tier'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Update a tier
-      tags:
-      - tiers
   /users:
     get:
       consumes:
@@ -698,6 +587,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get all users
       tags:
       - users
@@ -731,6 +622,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new user
       tags:
       - users
@@ -769,10 +662,15 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Vote on a tier
       tags:
       - votes
-schemes:
-- http
-- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -31,6 +31,7 @@ type VoteRequest struct {
 // @Success 201 {object} models.Vote
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
+// @Security BearerAuth
 // @Router /votes [post]
 func VoteTier(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -181,6 +182,7 @@ func VoteTier(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {object} models.Comment
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
+// @Security BearerAuth
 // @Router /comments [post]
 func CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -288,8 +290,7 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /comments/{id} [delete]
+// @Failure 500 {object} map[string]string// @Security BearerAuth// @Router /comments/{id} [delete]
 func DeleteComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
