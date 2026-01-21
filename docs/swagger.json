@@ -178,6 +178,11 @@
         },
         "/auth/me": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get the currently authenticated user's information (supports both session and JWT)",
                 "consumes": [
                     "application/json"
@@ -1030,5 +1035,6 @@
             "name": "Authorization",
             "in": "header"
         }
-    }
+    },
+    "x-explorer": false
 }

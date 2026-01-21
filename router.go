@@ -116,6 +116,6 @@ func SetupRoutes(port string) {
 
 	// Swagger documentation (public)
 	http.HandleFunc("/swagger/", authMiddleware(httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+port+"/swagger/doc.json"),
+		httpSwagger.URL("/swagger/doc.json"),
 	)))
 }

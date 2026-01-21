@@ -318,6 +318,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get current user
       tags:
       - auth
@@ -674,3 +676,4 @@ securityDefinitions:
     name: Authorization
     type: apiKey
 swagger: "2.0"
+x-explorer: false
