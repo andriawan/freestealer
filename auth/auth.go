@@ -202,7 +202,7 @@ func ExtractTokenFromHeader(r *http.Request) (string, error) {
 	}
 
 	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 		return "", errors.New("invalid authorization header format")
 	}
 
@@ -283,11 +283,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	query := database.DB
 
-	if req.Email != "" {
+	switch {
+	case req.Email != "":
 		query = query.Where("email = ?", req.Email)
-	} else if req.Username != "" {
+	case req.Username != "":
 		query = query.Where("username = ?", req.Username)
-	} else if req.GitHubID != "" {
+	case req.GitHubID != "":
 		query = query.Where(&models.User{GitHubID: req.GitHubID})
 	}
 
