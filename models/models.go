@@ -11,6 +11,7 @@ type User struct {
 	ID       uint   `gorm:"primaryKey" json:"id"`
 	Username string `gorm:"uniqueIndex;not null;size:50" json:"username"`
 	Email    string `gorm:"uniqueIndex;not null;size:100" json:"email"`
+	Password string `gorm:"size:255" json:"-"` // Hashed password, hidden from JSON
 
 	// GitHub OAuth fields
 	GitHubID     string `gorm:"size:50" json:"github_id,omitempty"` // Unique index created manually in database.go
