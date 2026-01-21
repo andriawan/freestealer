@@ -1,0 +1,89 @@
+name: Deploy to Leapcell
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Leapcell.io
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Build application
+      env:
+        CGO_ENABLED: 0
+        GOOS: linux
+        GOARCH: amd64
+      run: |
+        go build -ldflags="-s -w" -o freestealer .
+
+    - name: Create deployment package
+      run: |
+        mkdir -p deploy
+        cp freestealer deploy/
+        cp -r docs deploy/ 2>/dev/null || true
+        echo "PORT=8080" > deploy/.env.production
+        
+    - name: Create Procfile for Leapcell
+      run: |
+        echo "web: ./freestealer" > deploy/Procfile
+
+    - name: Create leapcell.json
+      run: |
+        cat > deploy/leapcell.json <<EOF
+        {
+          "name": "freestealer",
+          "runtime": "go",
+          "buildCommand": "go build -ldflags=\"-s -w\" -o freestealer .",
+          "startCommand": "./freestealer",
+          "env": {
+            "GO_VERSION": "1.23",
+            "PORT": "8080"
+          },
+          "routes": [
+            {
+              "src": "/(.*)",
+              "dest": "/"
+            }
+          ]
+        }
+        EOF
+
+    - name: Deploy to Leapcell
+      run: |
+        # Install Leapcell CLI
+        curl -fsSL https://cli.leapcell.io/install.sh | sh
+        
+        # Login to Leapcell
+        echo "${{ secrets.LEAPCELL_TOKEN }}" | leapcell login --token
+        
+        # Deploy application
+        cd deploy
+        leapcell deploy --prod
+      env:
+        LEAPCELL_TOKEN: ${{ secrets.LEAPCELL_TOKEN }}
+        LEAPCELL_PROJECT_ID: ${{ secrets.LEAPCELL_PROJECT_ID }}
+
+    - name: Verify deployment
+      run: |
+        echo "Deployment completed!"
+        echo "Application should be available at your Leapcell domain"
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "✅ Deployment successful!"
+        else
+          echo "❌ Deployment failed!"
+        fi
