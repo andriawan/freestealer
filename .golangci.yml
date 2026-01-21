@@ -21,7 +21,9 @@ linters-settings:
   golint:
     min-confidence: 0
   govet:
-    check-shadowing: true
+    enable-all: true
+    disable:
+      - shadow
   lll:
     line-length: 140
   maligned:
@@ -52,6 +54,7 @@ linters:
     - misspell
     - nakedret
     - nolintlint
+    - shadow
     - staticcheck
     - stylecheck
     - typecheck
@@ -74,12 +77,12 @@ issues:
     - path: main.go
       linters:
         - gochecknoinits
-
-run:
-  timeout: 5m
-  skip-dirs:
+  exclude-files:
+    - ".*_test.go"
+  exclude-dirs:
     - tmp
     - vendor
     - docs
-  skip-files:
-    - ".*_test.go"
+
+run:
+  timeout: 5m
