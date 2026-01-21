@@ -1,0 +1,632 @@
+basePath: /
+definitions:
+  handlers.VoteRequest:
+    properties:
+      tier_id:
+        type: integer
+      user_id:
+        type: integer
+      vote_type:
+        description: 1 for upvote, -1 for downvote
+        type: integer
+    type: object
+  models.Comment:
+    properties:
+      content:
+        description: max 100 characters
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      tier:
+        $ref: '#/definitions/models.Tier'
+      tier_id:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Relations
+      user_id:
+        type: integer
+    type: object
+  models.Tier:
+    properties:
+      bandwidth_limit:
+        type: string
+      comment_count:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      cpu_limit:
+        description: Tier details
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      downvote_count:
+        type: integer
+      id:
+        type: integer
+      is_public:
+        type: boolean
+      memory_limit:
+        type: string
+      monthly_hours:
+        type: string
+      name:
+        type: string
+      platform:
+        description: e.g., Railway, Koyeb, Vercel
+        type: string
+      storage_limit:
+        type: string
+      updated_at:
+        type: string
+      upvote_count:
+        description: Stats (denormalized for performance)
+        type: integer
+      url:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Relations
+      user_id:
+        type: integer
+      votes:
+        items:
+          $ref: '#/definitions/models.Vote'
+        type: array
+    type: object
+  models.User:
+    properties:
+      avatar_url:
+        type: string
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      github_id:
+        description: GitHub OAuth fields
+        type: string
+      github_login:
+        type: string
+      id:
+        type: integer
+      tiers:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.Tier'
+        type: array
+      updated_at:
+        type: string
+      username:
+        type: string
+      votes:
+        items:
+          $ref: '#/definitions/models.Vote'
+        type: array
+    type: object
+  models.Vote:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      tier:
+        $ref: '#/definitions/models.Tier'
+      tier_id:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Relations
+      user_id:
+        type: integer
+      vote_type:
+        description: 1 for upvote, -1 for downvote
+        type: integer
+    type: object
+host: localhost:5050
+info:
+  contact:
+    email: support@freetier.dev
+    name: API Support
+  description: API for tracking and sharing free tier hosting platform information
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Free Tier API
+  version: "1.0"
+paths:
+  /auth/github:
+    get:
+      consumes:
+      - application/json
+      description: Redirects user to GitHub for authentication
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to GitHub
+          schema:
+            type: string
+      summary: Start GitHub OAuth login
+      tags:
+      - auth
+  /auth/github/callback:
+    get:
+      consumes:
+      - application/json
+      description: Handles the callback from GitHub after authentication
+      parameters:
+      - description: OAuth code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: OAuth state
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: GitHub OAuth callback
+      tags:
+      - auth
+  /auth/logout:
+    get:
+      consumes:
+      - application/json
+      description: Destroys the user session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout user
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Get the currently authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get current user
+      tags:
+      - auth
+  /comments:
+    get:
+      consumes:
+      - application/json
+      description: Get all comments for a specific tier
+      parameters:
+      - description: Tier ID
+        in: query
+        name: tier_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get comments for a tier
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Add a comment to a tier (max 100 characters)
+      parameters:
+      - description: Comment data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a comment
+      tags:
+      - comments
+  /comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a comment from a tier
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a comment
+      tags:
+      - comments
+  /tiers:
+    get:
+      consumes:
+      - application/json
+      description: Get list of tiers with optional filters (platform, user_id, sort)
+      parameters:
+      - description: Filter by platform name
+        in: query
+        name: platform
+        type: string
+      - description: Filter by user ID
+        in: query
+        name: user_id
+        type: integer
+      - description: 'Sort order: ''recent'' or by upvotes (default)'
+        in: query
+        name: sort
+        type: string
+      - description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all tiers
+      tags:
+      - tiers
+    post:
+      consumes:
+      - application/json
+      description: Create a new free tier hosting platform entry
+      parameters:
+      - description: Tier object
+        in: body
+        name: tier
+        required: true
+        schema:
+          $ref: '#/definitions/models.Tier'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Tier'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new tier
+      tags:
+      - tiers
+  /tiers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a tier from the database
+      parameters:
+      - description: Tier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a tier
+      tags:
+      - tiers
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific tier
+      parameters:
+      - description: Tier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tier'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a tier by ID
+      tags:
+      - tiers
+    put:
+      consumes:
+      - application/json
+      description: Update an existing tier information
+      parameters:
+      - description: Tier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Tier update data
+        in: body
+        name: tier
+        required: true
+        schema:
+          $ref: '#/definitions/models.Tier'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a tier
+      tags:
+      - tiers
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all registered users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username and email
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new user
+      tags:
+      - users
+  /votes:
+    post:
+      consumes:
+      - application/json
+      description: Upvote or downvote a tier. Toggle off if same vote, change if different
+      parameters:
+      - description: 'Vote data (vote_type: 1 for upvote, -1 for downvote)'
+        in: body
+        name: vote
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Vote'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Vote'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Vote on a tier
+      tags:
+      - votes
+schemes:
+- http
+- https
+swagger: "2.0"

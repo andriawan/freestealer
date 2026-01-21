@@ -1,0 +1,957 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for tracking and sharing free tier hosting platform information",
+        "title": "Free Tier API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "email": "support@freetier.dev"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:5050",
+    "basePath": "/",
+    "paths": {
+        "/auth/github": {
+            "get": {
+                "description": "Redirects user to GitHub for authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Start GitHub OAuth login",
+                "responses": {
+                    "302": {
+                        "description": "Redirect to GitHub",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/github/callback": {
+            "get": {
+                "description": "Handles the callback from GitHub after authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "GitHub OAuth callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "OAuth state",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "get": {
+                "description": "Destroys the user session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "description": "Get the currently authenticated user's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comments": {
+            "get": {
+                "description": "Get all comments for a specific tier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get comments for a tier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tier ID",
+                        "name": "tier_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Comment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a comment to a tier (max 100 characters)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Create a comment",
+                "parameters": [
+                    {
+                        "description": "Comment data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Comment"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Comment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/{id}": {
+            "delete": {
+                "description": "Delete a comment from a tier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Delete a comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tiers": {
+            "get": {
+                "description": "Get list of tiers with optional filters (platform, user_id, sort)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tiers"
+                ],
+                "summary": "Get all tiers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by platform name",
+                        "name": "platform",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by user ID",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order: 'recent' or by upvotes (default)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new free tier hosting platform entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tiers"
+                ],
+                "summary": "Create a new tier",
+                "parameters": [
+                    {
+                        "description": "Tier object",
+                        "name": "tier",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Tier"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tier"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tiers/{id}": {
+            "get": {
+                "description": "Get detailed information about a specific tier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tiers"
+                ],
+                "summary": "Get a tier by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tier ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tier"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing tier information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tiers"
+                ],
+                "summary": "Update a tier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tier ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tier update data",
+                        "name": "tier",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Tier"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a tier from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tiers"
+                ],
+                "summary": "Delete a tier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tier ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "Get a list of all registered users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.User"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Register a new user with username and email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User object",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/votes": {
+            "post": {
+                "description": "Upvote or downvote a tier. Toggle off if same vote, change if different",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "votes"
+                ],
+                "summary": "Vote on a tier",
+                "parameters": [
+                    {
+                        "description": "Vote data (vote_type: 1 for upvote, -1 for downvote)",
+                        "name": "vote",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.VoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Vote"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Vote"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handlers.VoteRequest": {
+            "type": "object",
+            "properties": {
+                "tier_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "vote_type": {
+                    "description": "1 for upvote, -1 for downvote",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Comment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "max 100 characters",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tier": {
+                    "$ref": "#/definitions/models.Tier"
+                },
+                "tier_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "description": "Relations",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Tier": {
+            "type": "object",
+            "properties": {
+                "bandwidth_limit": {
+                    "type": "string"
+                },
+                "comment_count": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Comment"
+                    }
+                },
+                "cpu_limit": {
+                    "description": "Tier details",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "downvote_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "memory_limit": {
+                    "type": "string"
+                },
+                "monthly_hours": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "platform": {
+                    "description": "e.g., Railway, Koyeb, Vercel",
+                    "type": "string"
+                },
+                "storage_limit": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "upvote_count": {
+                    "description": "Stats (denormalized for performance)",
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "user": {
+                    "description": "Relations",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "votes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Vote"
+                    }
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Comment"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "github_id": {
+                    "description": "GitHub OAuth fields",
+                    "type": "string"
+                },
+                "github_login": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tiers": {
+                    "description": "Relations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tier"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "votes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Vote"
+                    }
+                }
+            }
+        },
+        "models.Vote": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tier": {
+                    "$ref": "#/definitions/models.Tier"
+                },
+                "tier_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "description": "Relations",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "vote_type": {
+                    "description": "1 for upvote, -1 for downvote",
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}
