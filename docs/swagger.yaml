@@ -1,5 +1,41 @@
 basePath: /
 definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      github_id:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
   handlers.VoteRequest:
     properties:
       tier_id:
@@ -139,7 +175,6 @@ definitions:
         description: 1 for upvote, -1 for downvote
         type: integer
     type: object
-host: localhost:5050
 info:
   contact:
     email: support@freetier.dev
@@ -206,6 +241,42 @@ paths:
       summary: GitHub OAuth callback
       tags:
       - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email or username and password to get JWT tokens. Password
+        is required if user has one set.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login with email/username and password
+      tags:
+      - auth
   /auth/logout:
     get:
       consumes:
@@ -227,7 +298,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the currently authenticated user's information
+      description: Get the currently authenticated user's information (supports both
+        session and JWT)
+      parameters:
+      - description: Bearer JWT token
+        in: header
+        name: Authorization
+        type: string
       produces:
       - application/json
       responses:
@@ -242,6 +319,75 @@ paths:
               type: string
             type: object
       summary: Get current user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh JWT token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username, email, and password
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
       tags:
       - auth
   /comments:

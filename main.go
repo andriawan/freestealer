@@ -5,10 +5,9 @@ import (
 	"os"
 	"time"
 
-	_ "freestealer/docs" // Import generated docs
-
 	"freestealer/auth"
 	"freestealer/database"
+	"freestealer/docs"
 
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +24,6 @@ import (
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host localhost:5050
 // @BasePath /
 // @schemes http https
 
@@ -55,6 +53,14 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	// Configure Swagger host dynamically
+	swaggerHost := os.Getenv("SWAGGER_HOST")
+	if swaggerHost == "" {
+		swaggerHost = "localhost:" + port
+	}
+	docs.SwaggerInfo.Host = swaggerHost
+	log.WithField("swagger_host", swaggerHost).Info("Swagger configured")
 
 	log.WithField("port", port).Info("Starting server")
 
