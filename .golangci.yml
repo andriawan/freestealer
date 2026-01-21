@@ -27,10 +27,10 @@ linters:
   disable-all: true
   enable:
     - bodyclose
+    - copyloopvar
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - gochecknoinits
     - goconst
     - gocritic
@@ -46,7 +46,6 @@ linters:
     - misspell
     - nakedret
     - nolintlint
-    - shadow
     - staticcheck
     - stylecheck
     - typecheck
