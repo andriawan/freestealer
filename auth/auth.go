@@ -3,10 +3,11 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"freestealer/database"
-	"freestealer/models"
 	"net/http"
 	"os"
+
+	"freestealer/database"
+	"freestealer/models"
 
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
@@ -142,14 +143,21 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create session
-	session, _ := store.Get(r, "auth-session")
+	session, err := store.Get(r, "auth-session")
+	if err != nil {
+		log.WithError(err).Error("Failed to get session")
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
 	session.Values["user_id"] = dbUser.ID
 	session.Values["github_id"] = user.UserID
-	session.Save(r, w)
+	if err := session.Save(r, w); err != nil {
+		log.WithError(err).Error("Failed to save session")
+	}
 
 	// Return user info and redirect info
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Authentication successful",
 		"user": map[string]interface{}{
 			"id":         dbUser.ID,
@@ -157,7 +165,9 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			"email":      dbUser.Email,
 			"avatar_url": dbUser.AvatarURL,
 		},
-	})
+	}); err != nil {
+		log.WithError(err).Error("Failed to encode response")
+	}
 }
 
 // LogoutHandler handles user logout
@@ -169,14 +179,23 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Router /auth/logout [get]
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "auth-session")
+	session, err := store.Get(r, "auth-session")
+	if err != nil {
+		log.WithError(err).Error("Failed to get session")
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
 	session.Values["user_id"] = nil
 	session.Values["github_id"] = nil
 	session.Options.MaxAge = -1
-	session.Save(r, w)
+	if err := session.Save(r, w); err != nil {
+		log.WithError(err).Error("Failed to save session")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"}); err != nil {
+		log.WithError(err).Error("Failed to encode response")
+	}
 }
 
 // GetCurrentUser returns the currently authenticated user
@@ -189,7 +208,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} map[string]string
 // @Router /auth/me [get]
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "auth-session")
+	session, err := store.Get(r, "auth-session")
+	if err != nil {
+		log.WithError(err).Error("Failed to get session")
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
 	userID, ok := session.Values["user_id"].(uint)
 
 	if !ok || userID == 0 {
@@ -204,13 +228,20 @@ func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		log.WithError(err).Error("Failed to encode user response")
+	}
 }
 
 // RequireAuth middleware to protect routes
 func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "auth-session")
+		session, err := store.Get(r, "auth-session")
+		if err != nil {
+			log.WithError(err).Error("Failed to get session")
+			http.Error(w, "Session error", http.StatusInternalServerError)
+			return
+		}
 		userID, ok := session.Values["user_id"].(uint)
 
 		if !ok || userID == 0 {

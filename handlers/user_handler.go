@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"freestealer/database"
 	"freestealer/models"
-	"net/http"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -52,7 +53,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		log.WithError(err).Error("Failed to encode user response")
+	}
 }
 
 // GetUsers handles GET /users - get all users
@@ -78,5 +81,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		log.WithError(err).Error("Failed to encode users response")
+	}
 }

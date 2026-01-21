@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"freestealer/database"
-	"freestealer/models"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"freestealer/database"
+	"freestealer/models"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -55,7 +56,9 @@ func CreateTier(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(tier)
+	if err := json.NewEncoder(w).Encode(tier); err != nil {
+		log.WithError(err).Error("Failed to encode tier response")
+	}
 }
 
 // GetTiers handles GET /tiers - get all public tiers or user's tiers
@@ -88,9 +91,15 @@ func GetTiers(w http.ResponseWriter, r *http.Request) {
 	// Filter by user_id if provided
 	userID := r.URL.Query().Get("user_id")
 	if userID != "" {
-		uid, _ := strconv.ParseUint(userID, 10, 32)
-		query = query.Where("user_id = ?", uid)
-	} else {
+		uid, err := strconv.ParseUint(userID, 10, 32)
+		if err != nil {
+			log.WithError(err).WithField("user_id", userID).Warn("Invalid user_id parameter")
+		} else {
+			query = query.Where("user_id = ?", uid)
+		}
+	}
+
+	if userID == "" {
 		// If no user_id, only show public tiers
 		query = query.Where("is_public = ?", true)
 	}
@@ -104,8 +113,8 @@ func GetTiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Pagination
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
 		page = 1
 	}
 	pageSize := 20
@@ -121,10 +130,12 @@ func GetTiers(w http.ResponseWriter, r *http.Request) {
 	log.WithField("count", len(tiers)).Info("Fetched tiers")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"data": tiers,
 		"page": page,
-	})
+	}); err != nil {
+		log.WithError(err).Error("Failed to encode tiers response")
+	}
 }
 
 // GetTier handles GET /tiers/{id} - get a specific tier
@@ -164,7 +175,9 @@ func GetTier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tier)
+	if err := json.NewEncoder(w).Encode(tier); err != nil {
+		log.WithError(err).Error("Failed to encode tier response")
+	}
 }
 
 // UpdateTier handles PUT /tiers/{id} - update a tier
@@ -211,7 +224,9 @@ func UpdateTier(w http.ResponseWriter, r *http.Request) {
 	log.WithField("tier_id", id).Info("Tier updated")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Tier updated successfully"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Tier updated successfully"}); err != nil {
+		log.WithError(err).Error("Failed to encode response")
+	}
 }
 
 // DeleteTier handles DELETE /tiers/{id} - delete a tier
@@ -251,5 +266,7 @@ func DeleteTier(w http.ResponseWriter, r *http.Request) {
 	log.WithField("tier_id", id).Info("Tier deleted")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Tier deleted successfully"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Tier deleted successfully"}); err != nil {
+		log.WithError(err).Error("Failed to encode response")
+	}
 }

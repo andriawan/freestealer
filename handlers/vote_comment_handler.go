@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"freestealer/database"
-	"freestealer/models"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"freestealer/database"
+	"freestealer/models"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -92,7 +93,9 @@ func VoteTier(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(vote)
+		if err := json.NewEncoder(w).Encode(vote); err != nil {
+			log.WithError(err).Error("Failed to encode vote response")
+		}
 		return
 	}
 
@@ -130,7 +133,9 @@ func VoteTier(w http.ResponseWriter, r *http.Request) {
 		}).Info("Vote removed")
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"message": "Vote removed"})
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Vote removed"}); err != nil {
+			log.WithError(err).Error("Failed to encode response")
+		}
 		return
 	}
 
@@ -161,7 +166,9 @@ func VoteTier(w http.ResponseWriter, r *http.Request) {
 	}).Info("Vote updated")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingVote)
+	if err := json.NewEncoder(w).Encode(existingVote); err != nil {
+		log.WithError(err).Error("Failed to encode vote response")
+	}
 }
 
 // CreateComment handles POST /comments - create a new comment
@@ -188,7 +195,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate content length (max 100 characters)
-	if len(comment.Content) == 0 || len(comment.Content) > 100 {
+	if comment.Content == "" || len(comment.Content) > 100 {
 		http.Error(w, "Comment must be between 1 and 100 characters", http.StatusBadRequest)
 		return
 	}
@@ -205,7 +212,9 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Increment comment count on tier
-	if err := tx.Model(&models.Tier{}).Where("id = ?", comment.TierID).UpdateColumn("comment_count", gorm.Expr("comment_count + 1")).Error; err != nil {
+	if err := tx.Model(&models.Tier{}).
+		Where("id = ?", comment.TierID).
+		UpdateColumn("comment_count", gorm.Expr("comment_count + 1")).Error; err != nil {
 		tx.Rollback()
 		log.WithError(err).Error("Failed to update comment count")
 		http.Error(w, "Failed to update comment count", http.StatusInternalServerError)
@@ -222,7 +231,9 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		log.WithError(err).Error("Failed to encode comment response")
+	}
 }
 
 // GetComments handles GET /comments?tier_id={id} - get comments for a tier
@@ -262,7 +273,9 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(comments)
+	if err := json.NewEncoder(w).Encode(comments); err != nil {
+		log.WithError(err).Error("Failed to encode comments response")
+	}
 }
 
 // DeleteComment handles DELETE /comments/{id} - delete a comment
@@ -313,7 +326,9 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decrement comment count on tier
-	if err := tx.Model(&models.Tier{}).Where("id = ?", comment.TierID).UpdateColumn("comment_count", gorm.Expr("comment_count - 1")).Error; err != nil {
+	if err := tx.Model(&models.Tier{}).
+		Where("id = ?", comment.TierID).
+		UpdateColumn("comment_count", gorm.Expr("comment_count - 1")).Error; err != nil {
 		tx.Rollback()
 		log.WithError(err).Error("Failed to update comment count")
 		http.Error(w, "Failed to update comment count", http.StatusInternalServerError)
@@ -325,5 +340,7 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 	log.WithField("comment_id", id).Info("Comment deleted")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Comment deleted successfully"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Comment deleted successfully"}); err != nil {
+		log.WithError(err).Error("Failed to encode response")
+	}
 }
