@@ -1,3 +1,5 @@
+version: 2
+
 linters-settings:
   dupl:
     threshold: 100
@@ -16,18 +18,12 @@ linters-settings:
       - style
   gocyclo:
     min-complexity: 15
-  goimports:
-    local-prefixes: freestealer
-  golint:
-    min-confidence: 0
   govet:
     enable-all: true
     disable:
       - shadow
   lll:
     line-length: 140
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
 
@@ -38,26 +34,19 @@ linters:
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - lll
     - misspell
     - nakedret
     - nolintlint
-    - shadow
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
